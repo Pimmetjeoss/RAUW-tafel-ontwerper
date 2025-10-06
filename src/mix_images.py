@@ -184,7 +184,7 @@ def main():
     parser.add_argument(
         "--legs",
         type=str,
-        help="Number of table legs (2/3/4, optional for CLI mode).",
+        help="Number of table legs (1/2/3/4, optional for CLI mode).",
     )
 
     args = parser.parse_args()
@@ -197,10 +197,10 @@ def main():
 
         # Step 2a: Number of legs (mandatory)
         while True:
-            aantal_poten = input("\n🔢 STAP 2a: Aantal poten (2/3/4): ").strip()
-            if aantal_poten in ['2', '3', '4']:
+            aantal_poten = input("\n🔢 STAP 2a: Aantal poten (1/2/3/4): ").strip()
+            if aantal_poten in ['1', '2', '3', '4']:
                 break
-            print("❌ Kies 2, 3 of 4 poten")
+            print("❌ Kies 1, 2, 3 of 4 poten")
 
         kleur = select_image("kleur", "STAP 3: Kies uw houtkleur/afwerking")
 
