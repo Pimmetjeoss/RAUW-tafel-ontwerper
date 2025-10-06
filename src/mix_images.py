@@ -128,7 +128,12 @@ def get_optional_room_image() -> str | None:
 
 def generate_table_prompt(with_room: bool = False, legs: str = "") -> str:
     """Generates the appropriate prompt for table generation."""
-    legs_instruction = f" IMPORTANT: The table must have exactly {legs} legs." if legs else ""
+    if legs == "1":
+        legs_instruction = " IMPORTANT: The table must have a single central pedestal base (one central support column)."
+    elif legs:
+        legs_instruction = f" IMPORTANT: The table must have exactly {legs} legs."
+    else:
+        legs_instruction = ""
 
     if with_room:
         return (
