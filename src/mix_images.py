@@ -99,6 +99,58 @@ def select_image(directory: str, label: str) -> str:
     return os.path.join(directory, files[choice])
 
 
+def get_optional_room_image() -> str | None:
+    """Asks user for optional room photo to place the table in."""
+    print("\n🏠 STAP 4 (optioneel): Plaats tafel in uw eigen ruimte")
+    print("\n💡 Tips voor beste resultaat:")
+    print("  • Goede belichting (natuurlijk licht of goede verlichting)")
+    print("  • Lege vloerruimte zichtbaar waar tafel kan staan")
+    print("  • Foto op ooghoogte genomen")
+    print("  • Hogere resolutie = beter resultaat")
+
+    room_path = input("\nPad naar uw ruimtefoto (Enter om over te slaan): ").strip()
+
+    if not room_path:
+        print("→ Gebruikt standaard showroom achtergrond")
+        return None
+
+    if os.path.exists(room_path):
+        print(f"✓ Ruimtefoto gevonden: {room_path}")
+        return room_path
+    else:
+        print(f"✗ Bestand niet gevonden: {room_path}")
+        retry = input("Opnieuw proberen? (j/n): ").strip().lower()
+        if retry == 'j':
+            return get_optional_room_image()
+        print("→ Gebruikt standaard showroom achtergrond")
+        return None
+
+
+def generate_table_prompt(with_room: bool = False) -> str:
+    """Generates the appropriate prompt for table generation."""
+    if with_room:
+        return (
+            "Create a photorealistic visualization by following these steps: "
+            "1) First, combine the table shape from image 1, the table base from image 2, "
+            "and the wood finish/color from image 3 into one complete, elegant custom dining table. "
+            "2) Then, place this complete table naturally in the room shown in image 4. "
+            "Match the perspective, lighting, and shadows of the room precisely. "
+            "The table should integrate seamlessly as if it belongs in this space, "
+            "with realistic proportions, natural placement on the floor, "
+            "and appropriate shadows and reflections. "
+            "The final image should look like a professional photograph of this custom table "
+            "in the actual room."
+        )
+    else:
+        return (
+            "Create a new image by combining the elements from the provided images. "
+            "Take [the table shape] from image 1 and combine it with [the table base] from image 2, "
+            "applying [the wood finish and color] from image 3. "
+            "The final image should be [a complete, elegant custom-made dining table "
+            "placed prominently in a modern, stylish living room with natural lighting]."
+        )
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Remix images using Google Generative AI."
@@ -121,6 +173,12 @@ def main():
         default="output",
         help="Directory to save the remixed images.",
     )
+    parser.add_argument(
+        "-r",
+        "--room-image",
+        type=str,
+        help="Path to room photo where the table should be placed (optional, only for interactive mode).",
+    )
 
     args = parser.parse_args()
 
@@ -131,18 +189,41 @@ def main():
         onderstel = select_image("onderstel", "STAP 2: Kies uw onderstel")
         kleur = select_image("kleur", "STAP 3: Kies uw houtkleur/afwerking")
 
-        all_image_paths = [vorm, onderstel, kleur]
-        final_prompt = "Create a new image by combining the elements from the provided images. Take [the table shape] from image 1 and combine it with [the table base] from image 2, applying [the wood finish and color] from image 3. The final image should be [a complete, elegant custom-made dining table placed prominently in a modern, stylish living room with natural lighting]."
+        # Step 4: Optional room image
+        room_image = args.room_image if args.room_image else get_optional_room_image()
+
+        if room_image and os.path.exists(room_image):
+            all_image_paths = [vorm, onderstel, kleur, room_image]
+            final_prompt = generate_table_prompt(with_room=True)
+            print(f"\n✨ Genereert tafel in uw eigen ruimte...")
+        else:
+            all_image_paths = [vorm, onderstel, kleur]
+            final_prompt = generate_table_prompt(with_room=False)
+            print(f"\n✨ Genereert tafel in standaard showroom...")
     else:
         # Original CLI mode
         all_image_paths = args.image
+
+        # Add room image if provided for table designer workflow
+        if args.room_image:
+            if len(all_image_paths) == 3 and os.path.exists(args.room_image):
+                all_image_paths.append(args.room_image)
+                print(f"✓ Adding room image: {args.room_image}")
+            elif len(all_image_paths) != 3:
+                print(f"⚠️  Warning: --room-image is designed for 3-image table workflow (vorm, onderstel, kleur). Ignoring room image.")
+            elif not os.path.exists(args.room_image):
+                print(f"✗ Room image not found: {args.room_image}")
+
         num_images = len(all_image_paths)
         if not (1 <= num_images <= 5):
             parser.error("Please provide between 1 and 5 input images using the -i flag.")
 
         final_prompt = args.prompt
         if final_prompt is None:
-            if num_images == 1:
+            # Special case: 4 images = table in custom room (if --room-image was used)
+            if num_images == 4 and args.room_image:
+                final_prompt = generate_table_prompt(with_room=True)
+            elif num_images == 1:
                 final_prompt = "Turn this image into a professional quality studio shoot with better lighting and depth of field."
             else:
                 final_prompt = "Combine the subjects of these images in a natural way, producing a new image."

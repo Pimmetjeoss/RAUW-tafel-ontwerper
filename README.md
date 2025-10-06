@@ -4,7 +4,8 @@ Een interactieve tafel designer die AI gebruikt om custom tafels te visualiseren
 
 ## Features
 
-- ✨ Interactieve tafel designer met 3 stappen
+- ✨ Interactieve tafel designer met 4 stappen (vorm, onderstel, kleur, ruimte)
+- 🏠 **NIEUW!** Visualiseer de tafel in jouw eigen woon- of eetkamer
 - 🤖 AI-gebaseerde beeldcombinatie met Google Gemini Flash Image
 - ⚡ CLI mode voor algemeen gebruik met 1-5 afbeeldingen
 
@@ -42,6 +43,29 @@ Dit start de interactieve mode waar je kunt kiezen uit:
 1. Tafelvorm (vorm/)
 2. Onderstel (onderstel/)
 3. Houtkleur/afwerking (kleur/)
+4. **NIEUW!** Plaats tafel in jouw eigen ruimte (optioneel)
+
+### ✨ Tafel in Jouw Eigen Ruimte (NIEUW!)
+
+Visualiseer hoe jouw custom tafel eruit ziet in jouw eigen woon- of eetkamer!
+
+**Interactieve Mode:**
+```bash
+python src/mix_images.py
+# Volg de stappen en upload bij stap 4 je ruimtefoto
+```
+
+**CLI Mode met eigen ruimte:**
+```bash
+python src/mix_images.py -i vorm/rond.jpeg -i onderstel/x_onderstel.jpeg -i kleur/eiken_donker.jpg -r mijn_woonkamer.jpg
+```
+
+**Tips voor beste resultaat:**
+- ✓ Gebruik goede belichting (natuurlijk licht of goede verlichting)
+- ✓ Zorg dat er lege vloerruimte zichtbaar is waar de tafel kan staan
+- ✓ Neem de foto op ooghoogte
+- ✓ Hogere resolutie = beter resultaat
+- ✓ Rechte hoek geeft beter perspectief dan schuine hoeken
 
 ### CLI Mode
 
