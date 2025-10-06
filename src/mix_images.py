@@ -126,15 +126,8 @@ def get_optional_room_image() -> str | None:
         return None
 
 
-def generate_table_prompt(with_room: bool = False, legs: str = "") -> str:
+def generate_table_prompt(with_room: bool = False) -> str:
     """Generates the appropriate prompt for table generation."""
-    if legs == "1":
-        legs_instruction = " IMPORTANT: The table must have a single central pedestal base (one central support column)."
-    elif legs:
-        legs_instruction = f" IMPORTANT: The table must have exactly {legs} legs."
-    else:
-        legs_instruction = ""
-
     if with_room:
         return (
             "Create a photorealistic visualization by following these steps: "
@@ -146,7 +139,7 @@ def generate_table_prompt(with_room: bool = False, legs: str = "") -> str:
             "with realistic proportions, natural placement on the floor, "
             "and appropriate shadows and reflections. "
             "The final image should look like a professional photograph of this custom table "
-            f"in the actual room.{legs_instruction}"
+            "in the actual room."
         )
     else:
         return (
@@ -154,7 +147,7 @@ def generate_table_prompt(with_room: bool = False, legs: str = "") -> str:
             "Take [the table shape] from image 1 and combine it with [the table base] from image 2, "
             "applying [the wood finish and color] from image 3. "
             "The final image should be [a complete, elegant custom-made dining table "
-            f"placed prominently in a modern, stylish living room with natural lighting].{legs_instruction}"
+            "placed prominently in a modern, stylish living room with natural lighting]."
         )
 
 
@@ -186,11 +179,6 @@ def main():
         type=str,
         help="Path to room photo where the table should be placed (optional, only for interactive mode).",
     )
-    parser.add_argument(
-        "--legs",
-        type=str,
-        help="Number of table legs (1/2/3/4, optional for CLI mode).",
-    )
 
     args = parser.parse_args()
 
@@ -199,14 +187,6 @@ def main():
         print("\n=== TAFEL DESIGNER ===")
         vorm = select_image("vorm", "STAP 1: Kies uw tafelvorm")
         onderstel = select_image("onderstel", "STAP 2: Kies uw onderstel")
-
-        # Step 2a: Number of legs (mandatory)
-        while True:
-            aantal_poten = input("\n🔢 STAP 2a: Aantal poten (1/2/3/4): ").strip()
-            if aantal_poten in ['1', '2', '3', '4']:
-                break
-            print("❌ Kies 1, 2, 3 of 4 poten")
-
         kleur = select_image("kleur", "STAP 3: Kies uw houtkleur/afwerking")
 
         # Step 4: Optional room image
@@ -214,11 +194,11 @@ def main():
 
         if room_image and os.path.exists(room_image):
             all_image_paths = [vorm, onderstel, kleur, room_image]
-            final_prompt = generate_table_prompt(with_room=True, legs=aantal_poten)
+            final_prompt = generate_table_prompt(with_room=True)
             print(f"\n✨ Genereert tafel in uw eigen ruimte...")
         else:
             all_image_paths = [vorm, onderstel, kleur]
-            final_prompt = generate_table_prompt(with_room=False, legs=aantal_poten)
+            final_prompt = generate_table_prompt(with_room=False)
             print(f"\n✨ Genereert tafel in standaard showroom...")
     else:
         # Original CLI mode
@@ -242,10 +222,10 @@ def main():
         if final_prompt is None:
             # Special case: 4 images = table in custom room (if --room-image was used)
             if num_images == 4 and args.room_image:
-                final_prompt = generate_table_prompt(with_room=True, legs=args.legs if args.legs else "")
+                final_prompt = generate_table_prompt(with_room=True)
             elif num_images == 3:
                 # 3 images = table designer mode (vorm, onderstel, kleur)
-                final_prompt = generate_table_prompt(with_room=False, legs=args.legs if args.legs else "")
+                final_prompt = generate_table_prompt(with_room=False)
             elif num_images == 1:
                 final_prompt = "Turn this image into a professional quality studio shoot with better lighting and depth of field."
             else:
