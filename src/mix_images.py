@@ -2,25 +2,17 @@ import argparse
 import mimetypes
 import os
 import time
+from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+
+load_dotenv()
 
 MODEL_NAME = "gemini-2.5-flash-image-preview"
 
 
-def remix_images(
-    image_paths: list[str],
-    prompt: str,
-    output_dir: str,
-):
-    """
-    Remixes two images using the Google Generative AI model.
-
-    Args:
-        image_paths: A list of two paths to input images.
-        prompt: The prompt for remixing the images.
-        output_dir: Directory to save the remixed images.
-    """
+def remix_images(image_paths: list[str], prompt: str, output_dir: str):
+    """Combines 1-5 images using Google Generative AI."""
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY environment variable not set.")
@@ -98,6 +90,15 @@ def _get_mime_type(file_path: str) -> str:
     return mime_type
 
 
+def select_image(directory: str, label: str) -> str:
+    """Displays images from a directory and lets user select one."""
+    files = sorted([f for f in os.listdir(directory) if f.lower().endswith(('.jpg', '.jpeg', '.png'))])
+    print(f"\n{label}:")
+    [print(f"  {i}. {f}") for i, f in enumerate(files, 1)]
+    choice = int(input(f"Kies (1-{len(files)}): ")) - 1
+    return os.path.join(directory, files[choice])
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Remix images using Google Generative AI."
@@ -106,8 +107,8 @@ def main():
         "-i",
         "--image",
         action="append",
-        required=True,
-        help="Paths to input images (1-5 images). Provide multiple -i flags for multiple images.",
+        required=False,
+        help="Paths to input images (1-5 images). Provide multiple -i flags for multiple images. If omitted, starts interactive table designer.",
     )
     parser.add_argument(
         "--prompt",
@@ -123,19 +124,28 @@ def main():
 
     args = parser.parse_args()
 
-    all_image_paths = args.image
+    # Interactive table designer mode
+    if not args.image:
+        print("\n=== TAFEL DESIGNER ===")
+        vorm = select_image("vorm", "STAP 1: Kies uw tafelvorm")
+        onderstel = select_image("onderstel", "STAP 2: Kies uw onderstel")
+        kleur = select_image("kleur", "STAP 3: Kies uw houtkleur/afwerking")
 
-    num_images = len(all_image_paths)
-    if not (1 <= num_images <= 5):
-        parser.error("Please provide between 1 and 5 input images using the -i flag.")
+        all_image_paths = [vorm, onderstel, kleur]
+        final_prompt = "Create a new image by combining the elements from the provided images. Take [the table shape] from image 1 and combine it with [the table base] from image 2, applying [the wood finish and color] from image 3. The final image should be [a complete, elegant custom-made dining table placed prominently in a modern, stylish living room with natural lighting]."
+    else:
+        # Original CLI mode
+        all_image_paths = args.image
+        num_images = len(all_image_paths)
+        if not (1 <= num_images <= 5):
+            parser.error("Please provide between 1 and 5 input images using the -i flag.")
 
-    # Determine the prompt
-    final_prompt = args.prompt
-    if final_prompt is None:
-        if num_images == 1:
-            final_prompt = "Turn this image into a professional quality studio shoot with better lighting and depth of field."
-        else:
-            final_prompt = "Combine the subjects of these images in a natural way, producing a new image."
+        final_prompt = args.prompt
+        if final_prompt is None:
+            if num_images == 1:
+                final_prompt = "Turn this image into a professional quality studio shoot with better lighting and depth of field."
+            else:
+                final_prompt = "Combine the subjects of these images in a natural way, producing a new image."
 
     # Ensure output directory exists
     output_dir = args.output_dir
