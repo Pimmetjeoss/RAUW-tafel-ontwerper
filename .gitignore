@@ -5,12 +5,21 @@ __pycache__/
 # IDE-specific files
 .idea/
 .vscode/
+.claude/
 
 # Virtual environment
 .venv/
+
+# Environment variables
+.env
 
 # Temporary files
 /tmp/
 /output/
 /input/
 /example/
+
+# Generated directories
+kleur/
+onderstel/
+vorm/
